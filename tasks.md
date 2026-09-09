@@ -6,7 +6,7 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
 
 ## Phase 1 — Environment & Database
 
-- [ ] **TSK-101** — Docker Compose skeleton (db + backend + frontend services)
+- [x] **TSK-101** — Docker Compose skeleton (db + backend + frontend services)
   - Hat: DevOpsAgent
   - Depends on: none
   - Files: `docker-compose.yml`, `.env.example`, `backend/docker/Dockerfile`, `frontend/docker/Dockerfile`
