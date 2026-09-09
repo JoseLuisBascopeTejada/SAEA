@@ -12,7 +12,7 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
   - Files: `docker-compose.yml`, `.env.example`, `backend/docker/Dockerfile`, `frontend/docker/Dockerfile`
   - Acceptance: `docker compose up` starts a healthy `pgvector/pgvector:pg16` container reachable on port 5432.
 
-- [ ] **TSK-102** — Backend skeleton (FastAPI app boots)
+- [x] **TSK-102** — Backend skeleton (FastAPI app boots)
   - Hat: AIBackendAgent
   - Depends on: TSK-101
   - Files: `backend/app/main.py`, `backend/requirements/base.txt`, `backend/pyproject.toml`
