@@ -14,6 +14,7 @@ from insightface.utils.storage import download as insightface_download
 
 REQUIRED_MODELS = {
     "det_2.5g.onnx": "SCRFD-2.5GF detector",
+    "2d106det.onnx": "2D 106-point landmark detector",
     "w600k_r50.onnx": "ArcFace ResNet50 recognizer",
 }
 

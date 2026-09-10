@@ -19,15 +19,16 @@ Teacher (browser, PWA) --HTTPS--> FastAPI backend --SQL/vector--> PostgreSQL 16 
 ## Face pipeline (Pipe-and-Filter)
 
 1. **Decode**: incoming WebP burst → BGR ndarray via OpenCV, in memory only.
-2. **Detect (SCRFD-2.5GF, `det_2.5g.onnx`)**: bounding boxes + 5 landmarks per face.
-3. **Align**: affine transform to canonical 112×112 crop.
-4. **Embed (ArcFace ResNet50, `w600k_r50.onnx`, fp32)**: 512-d vector via ONNX Runtime, AVX2/AVX-512 CPU path.
-5. **Match**: cosine similarity search against `student_biometrics.embedding` using the HNSW index in pgvector, threshold ≥ 0.42.
-6. **Discard**: raw frame and intermediate crops are dropped from memory; nothing is written to disk (constitution.md Article 2).
+2. **Detect (SCRFD-2.5GF, `det_2.5g.onnx`)**: bounding boxes only — this model has no keypoint output (confirmed empirically: 6 output tensors).
+3. **Extract landmarks (`2d106det.onnx`)**: run per detected face crop, producing 106 2D points; index-mapped down to the 5 standard points (left eye, right eye, nose tip, left mouth corner, right mouth corner).
+4. **Align**: affine transform to canonical 112×112 crop using those 5 points.
+5. **Embed (ArcFace ResNet50, `w600k_r50.onnx`, fp32)**: 512-d vector via ONNX Runtime, AVX2/AVX-512 CPU path.
+6. **Match**: cosine similarity search against `student_biometrics.embedding` using the HNSW index in pgvector, threshold ≥ 0.42.
+7. **Discard**: raw frame and intermediate crops are dropped from memory; nothing is written to disk (constitution.md Article 2).
 
 ### Model acquisition
 
-Both ONNX files come from the official InsightFace `buffalo_m` pack, fetched via the official `insightface` PyPI package's own auto-download mechanism (not a hand-written URL+checksum script — no single stable "official" standalone URL exists for these individual files; see the decision note in `spec.md` §2 RF-03). `backend/scripts/download_models.py` triggers this download once, then copies `det_2.5g.onnx` and `w600k_r50.onnx` out of the package's cache directory into `backend/models_data/` for the app to load directly via `onnxruntime`, independent of the `insightface` package at inference time.
+All three ONNX files (`det_2.5g.onnx`, `2d106det.onnx`, `w600k_r50.onnx`) come from the official InsightFace `buffalo_m` pack, fetched via the official `insightface` PyPI package's own auto-download mechanism (not a hand-written URL+checksum script — no single stable "official" standalone URL exists for these individual files; see the decision notes in `spec.md` §2 RF-02/RF-03). `backend/scripts/download_models.py` triggers this download once, then copies the three files out of the package's cache directory into `backend/models_data/` for the app to load directly via `onnxruntime`, independent of the `insightface` package at inference time.
 
 ## Concurrency
 

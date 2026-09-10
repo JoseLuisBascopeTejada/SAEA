@@ -6,19 +6,19 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
 
 ## Phase 1 — Environment & Database
 
-- [x] **TSK-101** — Docker Compose skeleton (db + backend + frontend services)
+- [ ] **TSK-101** — Docker Compose skeleton (db + backend + frontend services)
   - Hat: DevOpsAgent
   - Depends on: none
   - Files: `docker-compose.yml`, `.env.example`, `backend/docker/Dockerfile`, `frontend/docker/Dockerfile`
   - Acceptance: `docker compose up` starts a healthy `pgvector/pgvector:pg16` container reachable on port 5432.
 
-- [x] **TSK-102** — Backend skeleton (FastAPI app boots)
+- [ ] **TSK-102** — Backend skeleton (FastAPI app boots)
   - Hat: AIBackendAgent
   - Depends on: TSK-101
   - Files: `backend/app/main.py`, `backend/requirements/base.txt`, `backend/pyproject.toml`
   - Acceptance: `GET /health` returns `200 {"status":"ok"}` when running inside the backend container.
 
-- [x] **TSK-103** — DB models + Alembic migration for schema in spec.md §4
+- [ ] **TSK-103** — DB models + Alembic migration for schema in spec.md §4
   - Hat: DBAgent
   - Depends on: TSK-102
   - Files: `backend/app/models/database.py`, `backend/app/db/migrations/*`
@@ -26,21 +26,28 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
 
 ## Phase 2 — Computer Vision Pipeline
 
-- [x] **TSK-201** — Model acquisition script (via official `insightface` package)
+- [ ] **TSK-201** — Model acquisition script (via official `insightface` package)
   - Hat: AIBackendAgent
   - Depends on: TSK-102
   - Files: `backend/scripts/download_models.py`, `backend/requirements/base.txt` (add `insightface`, `onnxruntime`)
-  - Acceptance: script installs/uses the official `insightface` PyPI package to auto-download the `buffalo_m` model pack (its own official hosting — do NOT hand-write a download URL or checksum for the individual `.onnx` files, per the decision note in `spec.md` §2 RF-03), then copies exactly `det_2.5g.onnx` and `w600k_r50.onnx` into `backend/models_data/`, matching the paths in `.env.example` (`MODEL_DETECTION_PATH`, `MODEL_RECOGNITION_PATH`). Script must fail loudly (non-zero exit, clear message) if either file is missing after the download — never silently continue with a partial model set.
+  - Acceptance: script installs/uses the official `insightface` PyPI package to auto-download the `buffalo_m` model pack (its own official hosting — do NOT hand-write a download URL or checksum for the individual `.onnx` files, per the decision note in `spec.md` §2 RF-03), then copies exactly `det_2.5g.onnx`, `2d106det.onnx`, and `w600k_r50.onnx` into `backend/models_data/`, matching the paths in `.env.example` (`MODEL_DETECTION_PATH`, `MODEL_LANDMARK_PATH`, `MODEL_RECOGNITION_PATH`). Script must fail loudly (non-zero exit, clear message) if any file is missing after the download — never silently continue with a partial model set.
+  - **Retroactive amendment (post-TSK-202 research)**: TSK-201 was originally closed copying only `det_2.5g.onnx` and `w600k_r50.onnx`. `2d106det.onnx` must now also be copied — re-run the script (or add it manually) before starting TSK-202B below, and re-verify the acceptance criterion covers all three files.
 
-- [ ] **TSK-202** — Face detection module
+- [ ] **TSK-202** — Face detection module (bounding boxes only)
   - Hat: AIBackendAgent
   - Depends on: TSK-201
   - Files: `backend/app/services/face_detection.py`, `backend/tests/unit/test_face_detection.py`
-  - Acceptance: given a 1080p test image, returns bounding boxes + 5 landmarks per face in <150ms on CPU.
+  - Acceptance: given a 1080p test image, returns bounding boxes + confidence scores per face in <150ms on CPU. `det_2.5g.onnx` has no keypoint output (verify empirically: `len(onnxruntime.InferenceSession(path).get_outputs())` should be 6) — this task does NOT return landmarks; see TSK-202B.
+
+- [ ] **TSK-202B** — Facial landmark extraction (106→5 point mapping)
+  - Hat: AIBackendAgent
+  - Depends on: TSK-202
+  - Files: `backend/app/services/landmark_extraction.py`, `backend/tests/unit/test_landmark_extraction.py`
+  - Acceptance: given a detected face bounding box, runs `2d106det.onnx` on the corresponding crop and returns exactly 5 points (left eye, right eye, nose tip, left mouth corner, right mouth corner) index-mapped from the 106-point output. The specific index mapping must be verified from InsightFace's own source/documentation, not guessed — if the mapping cannot be confirmed with certainty, stop and report per constitution.md Article 4 rather than inventing indices.
 
 - [ ] **TSK-203** — Face alignment module
   - Hat: AIBackendAgent
-  - Depends on: TSK-202
+  - Depends on: TSK-202B
   - Files: `backend/app/services/alignment.py`
   - Acceptance: outputs a 112×112 aligned crop; unit test compares landmark positions against reference within tolerance.
 
