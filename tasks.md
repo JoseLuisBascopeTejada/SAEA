@@ -39,7 +39,7 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
   - Files: `backend/app/services/face_detection.py`, `backend/tests/unit/test_face_detection.py`
   - Acceptance: given a 1080p test image, returns bounding boxes + 5 landmarks + confidence scores per face in <150ms on CPU. `det_2.5g.onnx` HAS a keypoint output — verified empirically on the real file: 9 outputs (3 scores `[None,1]`, 3 bboxes `[None,4]`, 3 keypoints `[None,10]` per FPN stride 8/16/32). Decode via InsightFace's anchor-generation + `distance2bbox` + `distance2kps` logic (see architecture.md "Model acquisition"/pipeline notes). Do not re-derive this from naming convention alone — the empirical output above is authoritative for our actual file.
 
-- [ ] **TSK-203** — Face alignment module
+- [x] **TSK-203** — Face alignment module
   - Hat: AIBackendAgent
   - Depends on: TSK-202
   - Files: `backend/app/services/alignment.py`
