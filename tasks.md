@@ -6,19 +6,19 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
 
 ## Phase 1 — Environment & Database
 
-- [ ] **TSK-101** — Docker Compose skeleton (db + backend + frontend services)
+- [x] **TSK-101** — Docker Compose skeleton (db + backend + frontend services)
   - Hat: DevOpsAgent
   - Depends on: none
   - Files: `docker-compose.yml`, `.env.example`, `backend/docker/Dockerfile`, `frontend/docker/Dockerfile`
   - Acceptance: `docker compose up` starts a healthy `pgvector/pgvector:pg16` container reachable on port 5432.
 
-- [ ] **TSK-102** — Backend skeleton (FastAPI app boots)
+- [x] **TSK-102** — Backend skeleton (FastAPI app boots)
   - Hat: AIBackendAgent
   - Depends on: TSK-101
   - Files: `backend/app/main.py`, `backend/requirements/base.txt`, `backend/pyproject.toml`
   - Acceptance: `GET /health` returns `200 {"status":"ok"}` when running inside the backend container.
 
-- [ ] **TSK-103** — DB models + Alembic migration for schema in spec.md §4
+- [x] **TSK-103** — DB models + Alembic migration for schema in spec.md §4
   - Hat: DBAgent
   - Depends on: TSK-102
   - Files: `backend/app/models/database.py`, `backend/app/db/migrations/*`
@@ -26,7 +26,7 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
 
 ## Phase 2 — Computer Vision Pipeline
 
-- [ ] **TSK-201** — Model acquisition script (via official `insightface` package)
+- [x] **TSK-201** — Model acquisition script (via official `insightface` package)
   - Hat: AIBackendAgent
   - Depends on: TSK-102
   - Files: `backend/scripts/download_models.py`, `backend/requirements/base.txt` (add `insightface`, `onnxruntime`)
