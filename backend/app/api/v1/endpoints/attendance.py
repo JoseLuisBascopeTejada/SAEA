@@ -17,7 +17,7 @@ import asyncio
 import logging
 import os
 import time
-import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import UUID
 
@@ -29,8 +29,18 @@ from app.db.repositories.biometrics_repo import (
     find_best_match,
 )
 from app.db.session import get_db
-from app.models.database import Course, Student
-from app.models.schemas import DetectedStudent, ProcessBurstResponse
+from app.models.database import (
+    AttendanceRecord,
+    AttendanceSession,
+    Course,
+    Student,
+)
+from app.models.schemas import (
+    ConfirmRequest,
+    ConfirmResponse,
+    DetectedStudent,
+    ProcessBurstResponse,
+)
 from app.services.face_recognition import cosine_similarity
 from app.utils.image_processing import process_single_image
 
@@ -161,10 +171,64 @@ async def process_burst(
         )
         for v in by_student.values()
     ]
+    # Persist the session (TSK-302 retroactive patch): session_id is now a
+    # real attendance_sessions row, not an in-memory UUID. Inserted here, on
+    # success only, so failed bursts leave no session rows behind.
+    try:
+        session = AttendanceSession(course_id=course_id)
+        db.add(session)
+        db.flush()
+        session_id = session.id
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("burst session persist failed")
+        raise HTTPException(status_code=500, detail="inference failed")
+
     elapsed_ms = int((time.perf_counter() - t0) * 1000)
     return ProcessBurstResponse(
-        session_id=uuid.uuid4(),
+        session_id=session_id,
         detected_students=detected,
         unrecognized_count=len(unknown_clusters),
         processing_time_ms=elapsed_ms,
     )
+
+
+@router.post("/attendance/confirm", response_model=ConfirmResponse)
+async def confirm_attendance(
+    req: ConfirmRequest,
+    db: Session = Depends(get_db),
+) -> ConfirmResponse:
+    """Persist teacher-confirmed attendance for a process-burst session."""
+    session = db.get(AttendanceSession, req.session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="session not found")
+    if session.confirmed_at is not None:
+        raise HTTPException(status_code=409, detail="session already confirmed")
+
+    try:
+        record_ids: list[UUID] = []
+        for item in req.confirmations:
+            student = db.get(Student, item.student_id)
+            if student is None:
+                raise HTTPException(status_code=404, detail="student not found")
+            record = AttendanceRecord(
+                student_id=item.student_id,
+                course_id=session.course_id,
+                status=item.status,
+                session_id=session.id,
+            )
+            db.add(record)
+            db.flush()
+            record_ids.append(record.id)
+        session.confirmed_at = datetime.now(timezone.utc)
+        db.commit()
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception:
+        db.rollback()
+        logger.exception("attendance confirm failed")
+        raise HTTPException(status_code=500, detail="inference failed")
+
+    return ConfirmResponse(saved=True, attendance_record_ids=record_ids)

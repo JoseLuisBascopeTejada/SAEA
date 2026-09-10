@@ -21,7 +21,14 @@ from sqlalchemy.orm import sessionmaker
 from app.db.repositories.biometrics_repo import add_biometric
 from app.db.session import engine
 from app.main import app
-from app.models.database import Base, Course, Student, StudentBiometric
+from app.models.database import (
+    Base,
+    AttendanceRecord,
+    AttendanceSession,
+    Course,
+    Student,
+    StudentBiometric,
+)
 from app.services.alignment import align_face
 from app.services.face_detection import detect_faces
 from app.services.face_recognition import get_embedding
@@ -72,6 +79,10 @@ def enrolled_course():
     db.close()
     yield {"course_id": course_id, "student_id": student_id}
     db2 = Session()
+    # Teardown order respects FKs: process_burst now persists
+    # attendance_sessions rows referencing the course.
+    db2.query(AttendanceRecord).filter_by(course_id=course_id).delete()
+    db2.query(AttendanceSession).filter_by(course_id=course_id).delete()
     db2.query(StudentBiometric).filter_by(id=biometric_id).delete()
     db2.query(Student).filter_by(id=student_id).delete()
     db2.query(Course).filter_by(id=course_id).delete()
@@ -117,6 +128,8 @@ def empty_course():
     db.close()
     yield {"course_id": course_id}
     db2 = Session()
+    db2.query(AttendanceRecord).filter_by(course_id=course_id).delete()
+    db2.query(AttendanceSession).filter_by(course_id=course_id).delete()
     db2.query(Course).filter_by(id=course_id).delete()
     db2.commit()
     db2.close()

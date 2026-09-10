@@ -38,11 +38,12 @@ Out of scope for v0.1 (do not implement unless a task explicitly asks): student 
   "processing_time_ms": 420
 }
 ```
-- Errors: `400` (bad payload/wrong file count), `422` (validation), `500` (inference failure — must include a generic message, never a stack trace, to the client; full stack trace goes to server logs only).
+- Errors: `400` (bad payload/wrong file count), `422` (validation), `404` (unknown `course_id`), `500` (inference failure — must include a generic message, never a stack trace, to the client; full stack trace goes to server logs only).
 
 ### POST /api/v1/attendance/confirm
 - Request body (JSON): `{ "session_id": "uuid", "confirmations": [{ "student_id": "uuid", "status": "PRESENT|ABSENT|LATE" }] }`
 - Response `200 OK`: `{ "saved": true, "attendance_record_ids": ["uuid", ...] }`
+- Errors: `404` (unknown `session_id` or `student_id`), `409` (session already confirmed — never overwritten), `422` (validation, incl. empty `confirmations`), `500` (generic message to the client; full stack trace to server logs only).
 
 ### POST /api/v1/students
 - Enrolls a student and stores their embedding(s). Request: student metadata + 1-3 reference photos (same detect→align→embed pipeline, images discarded after processing per Article 2 of the constitution).
