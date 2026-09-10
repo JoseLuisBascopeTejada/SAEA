@@ -38,7 +38,7 @@ Out of scope for v0.1 (do not implement unless a task explicitly asks): student 
   "processing_time_ms": 420
 }
 ```
-- Errors: `400` (bad payload/wrong file count), `422` (validation), `500` (inference failure — must include a generic message, never a stack trace, to the client; full stack trace goes to server logs only).
+- Errors: `400` (bad payload/wrong file count), `422` (validation), `404` (unknown `course_id`), `500` (inference failure — must include a generic message, never a stack trace, to the client; full stack trace goes to server logs only).
 
 ### POST /api/v1/attendance/confirm
 - Request body (JSON): `{ "session_id": "uuid", "confirmations": [{ "student_id": "uuid", "status": "PRESENT|ABSENT|LATE" }] }`

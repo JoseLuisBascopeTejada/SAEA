@@ -25,6 +25,8 @@ Teacher (browser, PWA) --HTTPS--> FastAPI backend --SQL/vector--> PostgreSQL 16 
 5. **Match**: cosine similarity search against `student_biometrics.embedding` using the HNSW index in pgvector, threshold ≥ 0.42.
 6. **Discard**: raw frame and intermediate crops are dropped from memory; nothing is written to disk (constitution.md Article 2).
 
+> **Known limitation / TODO (TSK-301)**: `process-burst` matches faces against ALL enrolled biometrics — matching is not yet scoped to the requested course's roster. Roster-scoping is future work; no task covers it yet.
+
 ### Model acquisition
 
 Two ONNX files are actually used by the pipeline: `det_2.5g.onnx` and `w600k_r50.onnx`, both from the official InsightFace `buffalo_m` pack, fetched via the official `insightface` PyPI package's own auto-download mechanism (not a hand-written URL+checksum script — no single stable "official" standalone URL exists for these individual files; see the decision notes in `spec.md` §2 RF-02/RF-03). `backend/scripts/download_models.py` triggers this download once, then copies the files out of the package's cache directory into `backend/models_data/` for the app to load directly via `onnxruntime`, independent of the `insightface` package at inference time. `2d106det.onnx` was copied during an earlier (later-reverted) design and may still be present on disk but is not loaded by any service.
