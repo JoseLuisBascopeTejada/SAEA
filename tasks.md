@@ -51,7 +51,7 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
   - Files: `backend/app/services/face_recognition.py`, `backend/app/db/repositories/biometrics_repo.py`
   - Acceptance: given a synthetic embedding already in the DB, a query with the same embedding returns similarity 1.0 and matches; a random unrelated embedding returns no match above 0.42.
 
-- [ ] **TSK-205** — Raw-image-never-touches-disk guard
+- [x] **TSK-205** — Raw-image-never-touches-disk guard
   - Hat: AIBackendAgent
   - Depends on: TSK-204
   - Files: `backend/app/utils/image_processing.py`, `backend/tests/unit/test_no_disk_writes.py`
