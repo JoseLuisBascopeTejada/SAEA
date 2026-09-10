@@ -4,3 +4,6 @@ sqlalchemy
 alembic
 psycopg2-binary
 pgvector
+opencv-python-headless
+insightface
+onnxruntime
