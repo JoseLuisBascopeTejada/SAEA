@@ -45,7 +45,7 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
   - Files: `backend/app/services/alignment.py`
   - Acceptance: outputs a 112×112 aligned crop; unit test compares landmark positions against reference within tolerance.
 
-- [ ] **TSK-204** — Embedding extraction + cosine matching against pgvector
+- [x] **TSK-204** — Embedding extraction + cosine matching against pgvector
   - Hat: AIBackendAgent
   - Depends on: TSK-203, TSK-103
   - Files: `backend/app/services/face_recognition.py`, `backend/app/db/repositories/biometrics_repo.py`
