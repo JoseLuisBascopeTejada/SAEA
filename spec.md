@@ -38,7 +38,7 @@ Out of scope for v0.1 (do not implement unless a task explicitly asks): student 
   "processing_time_ms": 420
 }
 ```
-- Errors: `400` (bad payload/wrong file count), `422` (validation), `404` (unknown `course_id`), `500` (inference failure — must include a generic message, never a stack trace, to the client; full stack trace goes to server logs only).
+- Errors: `400` (bad payload/wrong file count), `422` (validation), `500` (inference failure — must include a generic message, never a stack trace, to the client; full stack trace goes to server logs only).
 
 ### POST /api/v1/attendance/confirm
 - Request body (JSON): `{ "session_id": "uuid", "confirmations": [{ "student_id": "uuid", "status": "PRESENT|ABSENT|LATE" }] }`
@@ -75,12 +75,19 @@ CREATE TABLE courses (
   name TEXT NOT NULL
 );
 
+CREATE TABLE attendance_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  course_id UUID NOT NULL REFERENCES courses(id),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  confirmed_at TIMESTAMPTZ
+);
+
 CREATE TABLE attendance_records (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   student_id UUID NOT NULL REFERENCES students(id),
   course_id UUID NOT NULL REFERENCES courses(id),
   status TEXT NOT NULL CHECK (status IN ('PRESENT','ABSENT','LATE')),
-  session_id UUID NOT NULL,
+  session_id UUID NOT NULL REFERENCES attendance_sessions(id),
   recorded_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```

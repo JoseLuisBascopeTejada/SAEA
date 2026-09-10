@@ -59,15 +59,23 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
 
 ## Phase 3 — Backend API
 
-- [ ] **TSK-301** — `POST /api/v1/attendance/process-burst`
+- [x] **TSK-301** — `POST /api/v1/attendance/process-burst`
   - Hat: AIBackendAgent
   - Depends on: TSK-204, TSK-205
   - Files: `backend/app/api/v1/endpoints/attendance.py`, `backend/app/models/schemas.py`
-  - Acceptance: matches the exact response shape in spec.md §3; returns within 5s for 50 synthetic faces.
+  - Acceptance: matches the exact response shape in spec.md §3; returns within 5s for 50 synthetic faces (full 50-face/<5s gate lives in TSK-502; TSK-301's own tests use a small burst for correctness only).
+  - **Retroactive amendment (decided after TSK-301 closed)**: `session_id` was generated as an in-memory `uuid4()`, not persisted anywhere. Now that `attendance_sessions` exists in spec.md §4 (added for TSK-302), TSK-302's migration (below) must run first, and `process_burst` must be updated to INSERT a row into `attendance_sessions` (id, course_id) instead of generating a bare UUID — this makes `session_id` a real, checkable foreign key. Small follow-up patch to `attendance.py`, done as the first step of TSK-302's build.
 
-- [ ] **TSK-302** — `POST /api/v1/attendance/confirm`
+- [ ] **TSK-302** — `POST /api/v1/attendance/confirm` (+ `attendance_sessions` migration)
+  - Hat: AIBackendAgent (DBAgent hat for the migration sub-step)
   - Depends on: TSK-301, TSK-103
-  - Acceptance: writes rows into `attendance_records`; rejects unknown `session_id` with 404.
+  - Files: `backend/app/db/migrations/versions/*` (new migration for `attendance_sessions`), `backend/app/models/database.py` (add `AttendanceSession` model), `backend/app/api/v1/endpoints/attendance.py` (edit: persist session in `process_burst`; add `confirm` route), `backend/app/models/schemas.py` (edit)
+  - Acceptance:
+    1. Migration creates `attendance_sessions` exactly per spec.md §4 (id, course_id FK, created_at, confirmed_at nullable).
+    2. `process_burst` (TSK-301) now inserts a session row instead of an in-memory UUID — verify with a DB query, not just the response.
+    3. `confirm` writes rows into `attendance_records` (now FK'd to `attendance_sessions.id`), sets `confirmed_at` on the session.
+    4. Rejects unknown `session_id` with 404 (row doesn't exist).
+    5. Rejects a `session_id` that was already confirmed (double-confirm) — status code and body left to the agent's plan, but must be handled explicitly, not silently overwritten.
 
 - [ ] **TSK-303** — `POST /api/v1/students` (enrollment) + `GET /api/v1/courses/{id}/students`
   - Depends on: TSK-204

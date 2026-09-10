@@ -42,15 +42,36 @@ EXPECTED_PHOTOS = 3
 MAX_TOTAL_BYTES = 8 * 1024 * 1024
 
 
+def _resolve_model_path(value: str) -> Path:
+    """Resolve a MODEL_*_PATH env value to an existing file.
+
+    .env values are written host-style ("backend/models_data/...", matching
+    .env.example), but in the container CWD is /app (= the backend dir), so
+    that prefix must be stripped. Absolute paths are used as-is.
+    Raises RuntimeError listing every tried candidate if none exists.
+    """
+    raw = Path(value)
+    candidates = [raw] if raw.is_absolute() else [raw, Path.cwd() / raw]
+    if not raw.is_absolute() and raw.parts[:1] == ("backend",):
+        stripped = Path(*raw.parts[1:])
+        candidates += [stripped, Path.cwd() / stripped]
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    raise RuntimeError(
+        f"model file not found: {value!r} "
+        f"(tried: {', '.join(str(c) for c in candidates)})"
+    )
+
+
 def _model_paths() -> tuple[Path, Path]:
     """Model paths are required env config (no silent default)."""
     try:
-        return (
-            Path(os.environ["MODEL_DETECTION_PATH"]),
-            Path(os.environ["MODEL_RECOGNITION_PATH"]),
-        )
+        det = _resolve_model_path(os.environ["MODEL_DETECTION_PATH"])
+        rec = _resolve_model_path(os.environ["MODEL_RECOGNITION_PATH"])
     except KeyError as exc:
         raise RuntimeError(f"missing required env var: {exc}") from exc
+    return det, rec
 
 
 @router.post("/attendance/process-burst", response_model=ProcessBurstResponse)

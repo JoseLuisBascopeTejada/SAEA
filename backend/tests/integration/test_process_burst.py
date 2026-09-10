@@ -104,14 +104,37 @@ def test_process_burst_matches_enrolled(enrolled_course):
     assert ids.count(str(enrolled_course["student_id"])) == 1
 
 
-def test_process_burst_counts_unrecognized(enrolled_course):
+@pytest.fixture()
+def empty_course():
+    """Course with NO enrollments: every detected face is unrecognized."""
+    Base.metadata.create_all(engine, checkfirst=True)
+    Session = sessionmaker(bind=engine)
+    db = Session()
+    course = Course(name="TSK-301 empty course")
+    db.add(course)
+    db.commit()
+    course_id = course.id
+    db.close()
+    yield {"course_id": course_id}
+    db2 = Session()
+    db2.query(Course).filter_by(id=course_id).delete()
+    db2.commit()
+    db2.close()
+
+
+def test_process_burst_counts_unrecognized(empty_course):
+    # No enrollments -> both cartoon faces are unknown. Their mutual
+    # similarity (~0.97, measured in TSK-204) clusters them into ONE
+    # unknown identity across all 3 photos: unrecognized_count == 1.
     resp = client.post(
         "/api/v1/attendance/process-burst",
         files=_burst_files(),
-        data={"course_id": str(enrolled_course["course_id"])},
+        data={"course_id": str(empty_course["course_id"])},
     )
     assert resp.status_code == 200, resp.text
-    assert resp.json()["unrecognized_count"] >= 1
+    body = resp.json()
+    assert body["detected_students"] == []
+    assert body["unrecognized_count"] == 1
 
 
 def test_wrong_file_count_400(enrolled_course):
