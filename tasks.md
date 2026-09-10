@@ -6,13 +6,13 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
 
 ## Phase 1 — Environment & Database
 
-- [x] **TSK-101** — Docker Compose skeleton (db + backend + frontend services)
+- [ ] **TSK-101** — Docker Compose skeleton (db + backend + frontend services)
   - Hat: DevOpsAgent
   - Depends on: none
   - Files: `docker-compose.yml`, `.env.example`, `backend/docker/Dockerfile`, `frontend/docker/Dockerfile`
   - Acceptance: `docker compose up` starts a healthy `pgvector/pgvector:pg16` container reachable on port 5432.
 
-- [x] **TSK-102** — Backend skeleton (FastAPI app boots)
+- [ ] **TSK-102** — Backend skeleton (FastAPI app boots)
   - Hat: AIBackendAgent
   - Depends on: TSK-101
   - Files: `backend/app/main.py`, `backend/requirements/base.txt`, `backend/pyproject.toml`
@@ -26,11 +26,11 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
 
 ## Phase 2 — Computer Vision Pipeline
 
-- [ ] **TSK-201** — Model download script
+- [ ] **TSK-201** — Model acquisition script (via official `insightface` package)
   - Hat: AIBackendAgent
   - Depends on: TSK-102
-  - Files: `backend/scripts/download_models.py`
-  - Acceptance: script downloads pinned versions of SCRFD-2.5GF and ArcFace MobileFaceNet INT8 ONNX files into `backend/models_data/`, verifying file checksum before accepting the download.
+  - Files: `backend/scripts/download_models.py`, `backend/requirements/base.txt` (add `insightface`, `onnxruntime`)
+  - Acceptance: script installs/uses the official `insightface` PyPI package to auto-download the `buffalo_m` model pack (its own official hosting — do NOT hand-write a download URL or checksum for the individual `.onnx` files, per the decision note in `spec.md` §2 RF-03), then copies exactly `det_2.5g.onnx` and `w600k_r50.onnx` into `backend/models_data/`, matching the paths in `.env.example` (`MODEL_DETECTION_PATH`, `MODEL_RECOGNITION_PATH`). Script must fail loudly (non-zero exit, clear message) if either file is missing after the download — never silently continue with a partial model set.
 
 - [ ] **TSK-202** — Face detection module
   - Hat: AIBackendAgent
