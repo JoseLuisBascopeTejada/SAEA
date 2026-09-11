@@ -66,7 +66,7 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
   - Acceptance: matches the exact response shape in spec.md §3; returns within 5s for 50 synthetic faces (full 50-face/<5s gate lives in TSK-502; TSK-301's own tests use a small burst for correctness only).
   - **Retroactive amendment (decided after TSK-301 closed)**: `session_id` was generated as an in-memory `uuid4()`, not persisted anywhere. Now that `attendance_sessions` exists in spec.md §4 (added for TSK-302), TSK-302's migration (below) must run first, and `process_burst` must be updated to INSERT a row into `attendance_sessions` (id, course_id) instead of generating a bare UUID — this makes `session_id` a real, checkable foreign key. Small follow-up patch to `attendance.py`, done as the first step of TSK-302's build.
 
-- [ ] **TSK-302** — `POST /api/v1/attendance/confirm` (+ `attendance_sessions` migration)
+- [x] **TSK-302** — `POST /api/v1/attendance/confirm` (+ `attendance_sessions` migration)
   - Hat: AIBackendAgent (DBAgent hat for the migration sub-step)
   - Depends on: TSK-301, TSK-103
   - Files: `backend/app/db/migrations/versions/*` (new migration for `attendance_sessions`), `backend/app/models/database.py` (add `AttendanceSession` model), `backend/app/api/v1/endpoints/attendance.py` (edit: persist session in `process_burst`; add `confirm` route), `backend/app/models/schemas.py` (edit)

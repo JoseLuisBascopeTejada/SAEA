@@ -47,6 +47,8 @@ Out of scope for v0.1 (do not implement unless a task explicitly asks): student 
 
 ### POST /api/v1/students
 - Enrolls a student and stores their embedding(s). Request: student metadata + 1-3 reference photos (same detect→align→embed pipeline, images discarded after processing per Article 2 of the constitution).
+- Response `201 Created`: `{ "student_id": "uuid", "full_name": "Jane Doe", "course_id": "uuid", "embeddings_stored": 2 }`
+- Errors: `400` (wrong photo count / oversize / undecodable bytes / 0 or >1 faces in any reference photo), `422` (validation), `404` (unknown `course_id`), `500` (generic message to the client; full stack trace to server logs only).
 
 ### GET /api/v1/courses/{course_id}/students
 - Returns the roster for a course (no embeddings in the response body, ever).

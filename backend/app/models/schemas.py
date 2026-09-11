@@ -36,3 +36,19 @@ class ConfirmRequest(BaseModel):
 class ConfirmResponse(BaseModel):
     saved: bool
     attendance_record_ids: list[UUID]
+
+
+class EnrollResponse(BaseModel):
+    student_id: UUID
+    full_name: str
+    course_id: UUID
+    embeddings_stored: int
+
+
+class RosterStudent(BaseModel):
+    student_id: UUID
+    full_name: str
+
+
+class RosterResponse(BaseModel):
+    students: list[RosterStudent]
