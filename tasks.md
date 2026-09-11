@@ -77,7 +77,7 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
     4. Rejects unknown `session_id` with 404 (row doesn't exist).
     5. Rejects a `session_id` that was already confirmed (double-confirm) — status code and body left to the agent's plan, but must be handled explicitly, not silently overwritten.
 
-- [ ] **TSK-303** — `POST /api/v1/students` (enrollment) + `GET /api/v1/courses/{id}/students`
+- [x] **TSK-303** — `POST /api/v1/students` (enrollment) + `GET /api/v1/courses/{id}/students`
   - Depends on: TSK-204
   - Acceptance: enrollment stores embedding only (no photo persisted); roster endpoint never returns embeddings.
 

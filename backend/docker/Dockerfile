@@ -7,6 +7,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # insightface pulls in opencv-python as a transitive dep, overwriting headless and causing libxcb.so.1 ImportError — reinstall headless last.
 RUN pip install --no-cache-dir --force-reinstall opencv-python-headless
 
+# Dev/test deps (pytest, httpx) so they survive image rebuilds.
+COPY requirements/dev.txt requirements-dev.txt
+RUN pip install --no-cache-dir -r requirements-dev.txt
+
 COPY app/ app/
 
 EXPOSE 8000
