@@ -83,13 +83,13 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
 
 ## Phase 4 — PWA Frontend (pnpm only)
 
-- [ ] **TSK-401** — Vite + React + TS + pnpm skeleton with `vite-plugin-pwa`
+- [x] **TSK-401** — Vite + React + TS + pnpm skeleton with `vite-plugin-pwa`
   - Hat: FrontendAgent
   - Depends on: none (can run in parallel with Phase 2/3)
   - Files: `frontend/package.json`, `frontend/vite.config.ts`
   - Acceptance: `pnpm install && pnpm dev` serves the app at `localhost:3000`. `package.json` must contain no npm/yarn lockfile — only `pnpm-lock.yaml`.
 
-- [ ] **TSK-402** — Camera capture hook + burst UI
+- [x] **TSK-402** — Camera capture hook + burst UI
   - Depends on: TSK-401
   - Files: `frontend/src/hooks/useCamera.ts`, `frontend/src/components/CameraCapture.tsx`
   - Acceptance: captures 3 frames 500ms apart from `navigator.mediaDevices.getUserMedia` and exposes them as Blobs.
