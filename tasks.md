@@ -94,15 +94,27 @@ Hat = which role from `agents.md` the agent should "wear" mentally for this task
   - Files: `frontend/src/hooks/useCamera.ts`, `frontend/src/components/CameraCapture.tsx`
   - Acceptance: captures 3 frames 500ms apart from `navigator.mediaDevices.getUserMedia` and exposes them as Blobs.
 
-- [ ] **TSK-403** — API client + attendance list UI
+- [x] **TSK-403** — API client + attendance list UI
   - Depends on: TSK-402, TSK-301
   - Files: `frontend/src/api/attendanceClient.ts`, `frontend/src/components/AttendanceList.tsx`
   - Acceptance: posts the burst, renders the returned list with per-student toggle.
 
-- [ ] **TSK-404** — Offline queue (IndexedDB) + service worker sync
+- [x] **TSK-404** — Offline queue (IndexedDB) + service worker sync
   - Depends on: TSK-403
   - Files: `frontend/src/services/offlineSync.ts`, `frontend/src/service-worker.ts`
   - Acceptance: with DevTools "offline" enabled, a capture is queued and auto-syncs when back online.
+  - **Amendment (folded into the TSK-404 build)**: minimal `frontend/src/store/attendanceStore.ts`
+    (Zustand shell — queue counts + last burst result only, per the architecture.md binding) was
+    created here, since no task covered it and offlineSync's queue-change seam needed a home.
+    Full app UI state remains out of scope. Incidental: `confirmAttendance()` added to
+    `frontend/src/api/attendanceClient.ts` (option A) so queued confirmations can actually retry.
+
+## Known gaps after Phase 4 (tracked, not built in TSK-404)
+
+- Zustand store gap → resolved by the TSK-404 amendment above (shell only).
+- No Playwright E2E setup (`frontend/tests/e2e/` per test.md) — needs a future task.
+- No confirm-UI wiring (nothing calls the confirm endpoint from AttendanceList yet) —
+  confirm queue entries can only originate once that UI exists. Needs a future task.
 
 ## Phase 5 — Testing & Performance
 

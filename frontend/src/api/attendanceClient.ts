@@ -1,5 +1,6 @@
 import {
   ProcessBurstError,
+  type AttendanceStatus,
   type ProcessBurstResult,
 } from '../types/attendance';
 
@@ -72,6 +73,58 @@ export async function processBurst(
     throw new ProcessBurstError(0, 'network-unavailable');
   }
   if (res.ok) return (await res.json()) as ProcessBurstResult;
+  let detail: string;
+  try {
+    const parsed: unknown = await res.json();
+    detail = extractDetail(parsed, `request failed: ${res.status}`);
+  } catch {
+    detail = `request failed: ${res.status}`;
+  }
+  throw new ProcessBurstError(res.status, detail);
+}
+
+export const CONFIRM_PATH = '/attendance/confirm';
+
+export interface ConfirmationItem {
+  student_id: string;
+  status: AttendanceStatus;
+}
+
+export interface ConfirmResult {
+  saved: boolean;
+  attendance_record_ids: string[];
+}
+
+/**
+ * POSTs teacher-confirmed attendance (spec.md §3 confirm shape).
+ * Throws ProcessBurstError carrying the backend's literal `detail`:
+ *   404 "session not found" / "student not found"
+ *   409 "session already confirmed"
+ *   422 validation detail passthrough (incl. empty `confirmations`)
+ *   500 "inference failed" (generic message only, per spec.md §3)
+ * Network-level failure surfaces as status 0.
+ * Added for TSK-404 option A (offline retry of confirmed attendance, RF-05).
+ */
+export async function confirmAttendance(
+  sessionId: string,
+  confirmations: ConfirmationItem[],
+  options?: ProcessBurstOptions,
+): Promise<ConfirmResult> {
+  if (confirmations.length === 0) {
+    throw new ProcessBurstError(422, 'confirmations must not be empty');
+  }
+  const baseUrl = options?.baseUrl ?? getApiBaseUrl();
+  let res: Response;
+  try {
+    res = await fetch(`${baseUrl}${CONFIRM_PATH}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId, confirmations }),
+    });
+  } catch {
+    throw new ProcessBurstError(0, 'network-unavailable');
+  }
+  if (res.ok) return (await res.json()) as ConfirmResult;
   let detail: string;
   try {
     const parsed: unknown = await res.json();

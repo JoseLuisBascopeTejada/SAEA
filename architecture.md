@@ -39,6 +39,10 @@ FastAPI's event loop stays free for I/O; CPU-bound inference steps (2–4 above)
 
 Chosen: **Zustand**, single store at `frontend/src/store/attendanceStore.ts`. Rationale: minimal boilerplate for a small app, works well with the offline queue in `offlineSync.ts`. This decision is binding — do not introduce Redux/Context duplicating this store without updating this file first.
 
+## Service worker & offline sync (frontend)
+
+`frontend/src/service-worker.ts` is a thin **registration wrapper** around vite-plugin-pwa's `generateSW` (Workbox) output — not a hand-rolled worker. No fetch handlers or precache lists live there; see `vite.config.ts` for the plugin config. Offline burst/confirm queueing (RF-05) lives in `frontend/src/services/offlineSync.ts` (app thread, IndexedDB `saea-offline` DB with `burst_queue`/`confirm_queue` stores). Photo bytes are persisted as ArrayBuffer+type pairs (structured-clone-safe) and each entry is deleted immediately after a successful retry.
+
 ## Directory structure
 
 ```
